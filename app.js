@@ -79,10 +79,13 @@ function calculate() {
 
   let expenses = 0;
   document.querySelectorAll('.expense-amount').forEach(input => expenses += Math.max(0, Number(input.value) || 0));
-  $('incomeTotal').textContent = money(income);
-  $('expenseTotal').textContent = money(expenses);
-  $('profitTotal').textContent = money(income - expenses);
-  return { income, expenses, profit: income - expenses };
+  const profit = income - expenses;
+
+  $('incomeSummary').textContent = money(income);
+  $('expenseSummary').textContent = money(expenses);
+  $('profitSummary').textContent = money(profit);
+  $('profitTotal').textContent = money(profit);
+  return { income, expenses, profit };
 }
 
 function getFormData() {
