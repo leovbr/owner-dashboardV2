@@ -18,6 +18,21 @@
       <p>Catat penjualan, pengeluaran, dan hasil usaha dengan rapi.</p>
     </header>
 
+    <section class="summary-grid">
+      <div class="summary-card summary-income">
+        <span>OMSET</span>
+        <strong id="incomeSummary">Rp0</strong>
+      </div>
+      <div class="summary-card summary-expense">
+        <span>PENGELUARAN</span>
+        <strong id="expenseSummary">Rp0</strong>
+      </div>
+      <div class="summary-card summary-profit">
+        <span>KEUNTUNGAN</span>
+        <strong id="profitSummary">Rp0</strong>
+      </div>
+    </section>
+
     <section class="card">
       <div class="section-head">
         <div>
@@ -27,10 +42,6 @@
         <input id="reportDate" type="date">
       </div>
       <div id="salesList" class="sales-list"></div>
-      <div class="total-box">
-        <span>Total Pendapatan</span>
-        <strong id="incomeTotal">Rp0</strong>
-      </div>
     </section>
 
     <section class="card">
@@ -42,10 +53,6 @@
         <button id="addExpense" class="btn btn-primary" type="button">+ Tambah</button>
       </div>
       <div id="expenseList" class="expense-list"></div>
-      <div class="total-box expense-total-box">
-        <span>Total Pengeluaran</span>
-        <strong id="expenseTotal">Rp0</strong>
-      </div>
     </section>
 
     <section class="result-card">
