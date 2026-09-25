@@ -28,7 +28,8 @@
 
   function bindCrosshair(el,data,w,h,pad,x,y){
     const stage=el.querySelector('[data-chart-stage]'),svg=stage.querySelector('svg'),cx=stage.querySelector('[data-crosshair-x]'),cy=stage.querySelector('[data-crosshair-y]'),dot=stage.querySelector('[data-crosshair-dot]'),tip=stage.querySelector('[data-chart-tooltip]');
-    const move=e=>{const rect=svg.getBoundingClientRect();let px=(e.clientX-rect.left)/rect.width*w;px=Math.max(pad.l,Math.min(w-pad.r,px));const ratio=(px-pad.l)/(w-pad.l-pad.r);const i=Math.max(0,Math.min(data.length-1,Math.round(ratio*(data.length-1))));const sx=x(i),income=Number(data[i].income)||0,profit=Number(data[i].profit)||0,py=y(Math.max(income,profit));cx.setAttribute('x1',sx);cx.setAttribute('x2',sx);cy.setAttribute('y1',py);dot.setAttribute('cx',sx);dot.setAttribute('cy',py);tip.hidden=false;tip.innerHTML=`<b>${esc(dateLabel(data[i].date))}</b><span>Omzet ${moneyChart(income)}</span><span>Profit ${moneyChart(profit)}</span>`;tip.style.left=`${Math.max(4,Math.min(78,(sx/w)*100))}%`;};
+    const move=e=>{const rect=svg.getBoundingClientRect();let px=(e.clientX-rect.left)/rect.width*w;px=Math.max(pad.l,Math.min(w-pad.r,px));const ratio=(px-pad.l)/(w-pad.l-pad.r);const i=Math.max(0,Math.min(data.length-1,Math.round(ratio*(data.length-1))));const sx=x(i),income=Number(data[i].income)||0,profit=Number(data[i].profit)||0,py=y(Math.max(income,profit));cx.setAttribute('x1',sx);cx.setAttribute('x2',sx);cy.setAttribute('y1',py);cy.setAttribute('y2',py);dot.setAttribute('cx',sx);dot.setAttribute('cy',py);tip.hidden=false;tip.innerHTML=`<b>${esc(dateLabel(data[i].date))}</b><span>Omzet ${moneyChart(income)}</span><span>Profit ${moneyChart(profit)}</span>`;tip.style.left=`${Math.max(4,Math.min(78,(sx/w)*100))}%`;};
     stage.addEventListener('pointermove',move);stage.addEventListener('pointerleave',()=>tip.hidden=true);
   }
+  renderTrendChart();
 })();
