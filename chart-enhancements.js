@@ -1,38 +1,83 @@
 (function(){
-  const chartState={grid:true,crosshair:false,dots:true};
+  const chartState={grid:true,crosshair:false,dots:true,zoom:1};
   const esc=v=>String(v??'').replace(/[&<>\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[c]));
-  const moneyChart=v=>'Rp'+Math.round(Number(v)||0).toLocaleString('id-ID');
-  const dateLabel=d=>new Intl.DateTimeFormat('id-ID',{day:'2-digit',month:'short'}).format(new Date(`${d}T00:00:00`));
+  const money=v=>'Rp'+Math.round(Number(v)||0).toLocaleString('id-ID');
+  const dateLabel=d=>new Intl.DateTimeFormat('id-ID',{day:'numeric',month:'short'}).format(new Date(`${d}T00:00:00`)).replace('.','');
   const pct=(now,prev)=>prev===0?(now===0?0:null):((now-prev)/Math.abs(prev))*100;
   const pctText=v=>v===null?'—':`${v>=0?'+':''}${v.toFixed(1)}%`;
+  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 
   window.renderTrendChart=function(){
     const el=document.getElementById('trendChart'); if(!el)return;
-    // Semua laporan yang benar-benar ditambahkan user: tidak ada batas 14 hari.
     const reports=Object.values(getReports()).filter(r=>r&&r.date).sort((a,b)=>a.date.localeCompare(b.date));
     const hasData=reports.length>0;
     const data=hasData?reports:Array.from({length:5},(_,i)=>({date:`2000-01-${String(i+1).padStart(2,'0')}`,income:0,profit:0}));
-    const w=900,h=330,pad={l:58,r:20,t:24,b:48},innerW=w-pad.l-pad.r,innerH=h-pad.t-pad.b;
-    const values=data.flatMap(r=>[Number(r.income)||0,Number(r.profit)||0]);
-    const rawMax=Math.max(0,...values),rawMin=Math.min(0,...values),span=Math.max(1,rawMax-rawMin);
-    const max=hasData?rawMax+span*.10:100,min=hasData?rawMin-span*.10:0,range=Math.max(1,max-min);
-    const x=i=>pad.l+(data.length===1?innerW/2:i*innerW/(data.length-1));
-    const y=v=>pad.t+(max-v)*innerH/range;
-    const points=key=>data.map((r,i)=>`${x(i).toFixed(1)},${y(Number(r[key])||0).toFixed(1)}`).join(' ');
-    const grid=Array.from({length:5},(_,i)=>{const v=max-range*(i/4);return `<line x1="${pad.l}" y1="${y(v)}" x2="${w-pad.r}" y2="${y(v)}" class="chart-grid-line"/><text x="${pad.l-10}" y="${y(v)+4}" text-anchor="end" class="chart-axis-label">${hasData?moneyChart(v):'0'}</text>`}).join('');
-    const labels=data.map((r,i)=>{if(!hasData)return '';if(data.length>12&&i%Math.ceil(data.length/8)!==0&&i!==data.length-1)return '';return `<text x="${x(i)}" y="${h-15}" text-anchor="middle" class="chart-label">${dateLabel(r.date)}</text>`}).join('');
-    const dots=(key,cls)=>data.map((r,i)=>`<circle cx="${x(i)}" cy="${y(Number(r[key])||0)}" r="4" class="chart-data-dot ${cls}"/>`).join('');
-    const zeroY=y(0),last=data[data.length-1],prev=data.length>1?data[data.length-2]:null;
-    const lastIncomeChange=prev?pct(Number(last.income)||0,Number(prev.income)||0):null,lastProfitChange=prev?pct(Number(last.profit)||0,Number(prev.profit)||0):null;
-    el.innerHTML=`<div class="chart-stage" data-chart-stage><svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" role="img" aria-label="Grafik omzet dan keuntungan berdasarkan semua laporan tersimpan"><g class="chart-grid-layer ${chartState.grid?'visible':''}">${grid}</g><line x1="${pad.l}" y1="${zeroY}" x2="${w-pad.r}" y2="${zeroY}" class="chart-zero-line"/><polyline points="${points('income')}" class="chart-line chart-income"/><polyline points="${points('profit')}" class="chart-line chart-profit"/><g class="chart-dots-layer ${chartState.dots?'visible':''}">${dots('income','chart-income-dot')}${dots('profit','chart-profit-dot')}</g><g>${labels}</g><line x1="${pad.l}" y1="${pad.t}" x2="${pad.l}" y2="${h-pad.b}" class="chart-axis-line"/><line x1="${pad.l}" y1="${h-pad.b}" x2="${w-pad.r}" y2="${h-pad.b}" class="chart-axis-line"/><g class="chart-crosshair-layer ${chartState.crosshair?'visible':''}"><line data-crosshair-x x1="${pad.l}" y1="${pad.t}" x2="${pad.l}" y2="${h-pad.b}" class="chart-crosshair-x"/><line data-crosshair-y x1="${pad.l}" y1="${zeroY}" x2="${w-pad.r}" y2="${zeroY}" class="chart-crosshair-y"/><circle data-crosshair-dot cx="${pad.l}" cy="${zeroY}" r="6" class="chart-crosshair-dot"/></g></svg><div class="chart-tooltip" data-chart-tooltip hidden></div></div><div class="chart-bottom"><div class="chart-legend"><span><i class="legend-income"></i> Omzet</span><span><i class="legend-profit"></i> Keuntungan</span>${hasData&&prev?`<span class="chart-change ${lastIncomeChange!==null&&lastIncomeChange>=0?'up':'down'}">Omzet ${pctText(lastIncomeChange)}</span><span class="chart-change ${lastProfitChange!==null&&lastProfitChange>=0?'up':'down'}">Profit ${pctText(lastProfitChange)}</span>`:'<span class="chart-last-readout">Tambahkan laporan harian untuk melihat perubahan</span>'}</div><div class="chart-tools"><button type="button" class="chart-toggle ${chartState.grid?'on':''}" data-chart-toggle="grid">▦ Grid</button><button type="button" class="chart-toggle ${chartState.crosshair?'on':''}" data-chart-toggle="crosshair">＋ Garis</button><button type="button" class="chart-toggle ${chartState.dots?'on':''}" data-chart-toggle="dots">● Titik</button></div></div>`;
+    const w=1000,h=390,pad={l:72,r:72,t:30,b:62};
+    const innerW=w-pad.l-pad.r,innerH=h-pad.t-pad.b;
+    const base=hasData?(Number(data[0].income)||Number(data[0].profit)||0):0;
+    const performance=r=>base?((Number(r.income)||0)/base)*100:0;
+    const perf=data.map(performance);
+    const maxPerf=hasData?Math.max(100,...perf):100;
+    const minPerf=hasData?Math.min(0,...perf):0;
+    const span=Math.max(100,maxPerf-minPerf);
+    const maxY=Math.ceil((maxPerf+10)/10)*10,minY=Math.floor((minPerf-10)/10)*10,range=Math.max(100,maxY-minY);
+    const plotW=innerW*chartState.zoom;
+    const x=i=>pad.l+(data.length===1?innerW/2:i*(plotW/(Math.max(1,data.length-1))));
+    const y=v=>pad.t+(maxY-v)*innerH/range;
+    const visibleWidth=pad.l+innerW;
+    const incomePoints=data.map((r,i)=>`${x(i).toFixed(1)},${y(performance(r)).toFixed(1)}`).join(' ');
+    const profitBase=hasData?(Number(data[0].profit)||0):0;
+    const profitPerf=r=>profitBase?((Number(r.profit)||0)/profitBase)*100:0;
+    const profitPoints=data.map((r,i)=>`${x(i).toFixed(1)},${y(profitPerf(r)).toFixed(1)}`).join(' ');
+    const tickCount=5;
+    const grid=Array.from({length:tickCount},(_,i)=>{
+      const v=maxY-range*(i/(tickCount-1));
+      return `<line x1="${pad.l}" y1="${y(v)}" x2="${visibleWidth}" y2="${y(v)}" class="chart-grid-line"/><text x="${pad.l-12}" y="${y(v)+4}" text-anchor="end" class="chart-axis-label">${Math.round(v)}%</text>`;
+    }).join('');
+    const rightTicks=Array.from({length:tickCount},(_,i)=>{
+      const v=maxY-range*(i/(tickCount-1));
+      const idx=Math.round((i/(tickCount-1))*(data.length-1));
+      const cur=Number(data[idx]?.income)||0,prev=idx>0?(Number(data[idx-1].income)||0):0;
+      const ch=idx>0?pct(cur,prev):0;
+      return `<text x="${visibleWidth+12}" y="${y(v)+4}" text-anchor="start" class="chart-axis-label chart-right-pct">${idx===0?'0%':pctText(ch)}</text>`;
+    }).join('');
+    const labels=data.map((r,i)=>{
+      if(!hasData)return '';
+      if(data.length>12&&i%Math.ceil(data.length/9)!==0&&i!==data.length-1)return '';
+      return `<text x="${x(i)}" y="${h-20}" text-anchor="middle" class="chart-label">${dateLabel(r.date)}</text>`;
+    }).join('');
+    const dots=(key,cls,fn)=>data.map((r,i)=>`<circle cx="${x(i)}" cy="${y(fn(r))}" r="5" class="chart-data-dot ${cls}"/>`).join('');
+    const candleBars=hasData?data.map((r,i)=>{
+      if(i===0)return '';
+      const prev=Number(data[i-1].income)||0,cur=Number(r.income)||0,ch=pct(cur,prev);
+      const barH=Math.max(7,Math.abs(y(performance(r))-y(performance(data[i-1]))));
+      const top=Math.min(y(performance(r)),y(performance(data[i-1])));
+      return `<line x1="${x(i)}" y1="${top}" x2="${x(i)}" y2="${top+barH}" class="chart-candle ${ch>=0?'up':'down'}"/><line x1="${x(i)-6}" y1="${y(performance(r))}" x2="${x(i)+6}" y2="${y(performance(r))}" class="chart-candle-cap ${ch>=0?'up':'down'}"/>`;
+    }).join(''):'';
+    const first=hasData?data[0]:null,last=hasData?data[data.length-1]:null,prev=hasData&&data.length>1?data[data.length-2]:null;
+    const lastChange=prev?pct(Number(last.income)||0,Number(prev.income)||0):0;
+    const lastPerf=hasData?performance(last):0;
+    el.innerHTML=`<div class="chart-stage" data-chart-stage><svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" role="img" aria-label="Grafik performa dan perubahan omzet"><g class="chart-grid-layer ${chartState.grid?'visible':''}">${grid}</g><line x1="${pad.l}" y1="${pad.t}" x2="${pad.l}" y2="${h-pad.b}" class="chart-axis-line"/><line x1="${visibleWidth}" y1="${pad.t}" x2="${visibleWidth}" y2="${h-pad.b}" class="chart-axis-line"/><line x1="${pad.l}" y1="${h-pad.b}" x2="${visibleWidth}" y2="${h-pad.b}" class="chart-axis-line"/><g class="chart-right-labels">${rightTicks}</g><g class="chart-candles">${candleBars}</g><polyline points="${incomePoints}" class="chart-line chart-income"/><polyline points="${profitPoints}" class="chart-line chart-profit"/><g class="chart-dots-layer ${chartState.dots?'visible':''}">${dots('income','chart-income-dot',performance)}${dots('profit','chart-profit-dot',profitPerf)}</g><g>${labels}</g><g class="chart-crosshair-layer ${chartState.crosshair?'visible':''}"><line data-crosshair-x x1="${pad.l}" y1="${pad.t}" x2="${pad.l}" y2="${h-pad.b}" class="chart-crosshair-x"/><line data-crosshair-y x1="${pad.l}" y1="${y(lastPerf)}" x2="${visibleWidth}" y2="${y(lastPerf)}" class="chart-crosshair-y"/><circle data-crosshair-dot cx="${pad.l}" cy="${y(lastPerf)}" r="7" class="chart-crosshair-dot"/></g></svg><div class="chart-tooltip" data-chart-tooltip hidden></div></div><div class="chart-bottom"><div class="chart-legend"><span><i class="legend-income"></i> Omzet</span><span><i class="legend-profit"></i> Keuntungan</span>${hasData&&prev?`<span class="chart-change ${lastChange>=0?'up':'down'}">${pctText(lastChange)}</span>`:'<span class="chart-last-readout">Tambahkan laporan harian untuk melihat perubahan</span>'}</div><div class="chart-tools"><button type="button" class="chart-toggle ${chartState.grid?'on':''}" data-chart-toggle="grid">▦ Grid</button><button type="button" class="chart-toggle ${chartState.crosshair?'on':''}" data-chart-toggle="crosshair">＋ Garis</button><button type="button" class="chart-toggle ${chartState.dots?'on':''}" data-chart-toggle="dots">● Titik</button></div></div>`;
     el.querySelectorAll('[data-chart-toggle]').forEach(btn=>btn.onclick=()=>{chartState[btn.dataset.chartToggle]=!chartState[btn.dataset.chartToggle];renderTrendChart();});
-    if(chartState.crosshair&&hasData)bindCrosshair(el,data,w,h,pad,x,y);
+    bindInteractions(el,data,w,h,pad,x,y,performance,profitPerf);
   };
 
-  function bindCrosshair(el,data,w,h,pad,x,y){
-    const stage=el.querySelector('[data-chart-stage]'),svg=stage.querySelector('svg'),cx=stage.querySelector('[data-crosshair-x]'),cy=stage.querySelector('[data-crosshair-y]'),dot=stage.querySelector('[data-crosshair-dot]'),tip=stage.querySelector('[data-chart-tooltip]');
-    const move=e=>{const rect=svg.getBoundingClientRect();let px=(e.clientX-rect.left)/rect.width*w;px=Math.max(pad.l,Math.min(w-pad.r,px));const ratio=(px-pad.l)/(w-pad.l-pad.r),i=Math.max(0,Math.min(data.length-1,Math.round(ratio*(data.length-1)))),sx=x(i),income=Number(data[i].income)||0,profit=Number(data[i].profit)||0,py=y(Math.max(income,profit)),prev=i>0?data[i-1]:null,incomeDelta=prev?pct(income,Number(prev.income)||0):null,profitDelta=prev?pct(profit,Number(prev.profit)||0):null;cx.setAttribute('x1',sx);cx.setAttribute('x2',sx);cy.setAttribute('y1',py);cy.setAttribute('y2',py);dot.setAttribute('cx',sx);dot.setAttribute('cy',py);tip.hidden=false;tip.innerHTML=`<b>${esc(dateLabel(data[i].date))}</b><span>Omzet ${moneyChart(income)} <em>${pctText(incomeDelta)}</em></span><span>Profit ${moneyChart(profit)} <em>${pctText(profitDelta)}</em></span>`;tip.style.left=`${Math.max(4,Math.min(78,(sx/w)*100))}%`;};
+  function bindInteractions(el,data,w,h,pad,x,y,performance,profitPerf){
+    const stage=el.querySelector('[data-chart-stage]'),svg=stage.querySelector('svg'),tip=stage.querySelector('[data-chart-tooltip]');
+    let pinchStart=null;
+    const move=e=>{
+      if(!chartState.crosshair||!data.length)return;
+      const rect=svg.getBoundingClientRect();let px=(e.clientX-rect.left)/rect.width*w;
+      px=clamp(px,pad.l,w-pad.r);const ratio=clamp((px-pad.l)/(w-pad.l-pad.r),0,1),i=Math.max(0,Math.min(data.length-1,Math.round(ratio*(data.length-1))));
+      const sx=x(i),income=Number(data[i].income)||0,profit=Number(data[i].profit)||0,prev=i>0?(Number(data[i-1].income)||0):0,ch=i>0?pct(income,prev):0;
+      const crossX=stage.querySelector('[data-crosshair-x]'),crossY=stage.querySelector('[data-crosshair-y]'),dot=stage.querySelector('[data-crosshair-dot]');
+      crossX.setAttribute('x1',sx);crossX.setAttribute('x2',sx);crossY.setAttribute('y1',y(performance(data[i])));crossY.setAttribute('y2',y(performance(data[i])));dot.setAttribute('cx',sx);dot.setAttribute('cy',y(performance(data[i])));
+      tip.hidden=false;tip.innerHTML=`<b>${esc(dateLabel(data[i].date))}</b><span>Omzet ${money(income)}</span><span>Profit ${money(profit)}</span><strong class="tip-change ${ch>=0?'up':'down'}">${pctText(ch)}</strong>`;tip.style.left=`${clamp((sx/w)*100,5,82)}%`;
+    };
     stage.addEventListener('pointermove',move);stage.addEventListener('pointerleave',()=>tip.hidden=true);
+    stage.addEventListener('touchstart',e=>{if(e.touches.length===2)pinchStart=Math.abs(e.touches[0].clientX-e.touches[1].clientX);},{passive:true});
+    stage.addEventListener('touchmove',e=>{if(e.touches.length===2&&pinchStart){const dist=Math.abs(e.touches[0].clientX-e.touches[1].clientX);const factor=dist/pinchStart;chartState.zoom=clamp(chartState.zoom*factor,.75,3);pinchStart=dist;renderTrendChart();e.preventDefault();}},{passive:false});
+    stage.addEventListener('touchend',()=>pinchStart=null,{passive:true});
   }
   renderTrendChart();
 })();
