@@ -1,0 +1,42 @@
+/* Compact hamburger menu — horizontal option row */
+.side-menu{
+  position:absolute;
+  top:58px;
+  right:0;
+  left:auto;
+  width:min(720px,calc(100vw - 24px));
+  padding:10px;
+  border:1px solid rgba(92,158,222,.18);
+  border-radius:16px;
+  background:rgba(7,18,32,.97);
+  box-shadow:0 20px 55px rgba(0,0,0,.42);
+  backdrop-filter:blur(18px);
+  -webkit-backdrop-filter:blur(18px);
+}
+.menu-title{display:none}
+.side-menu.open{display:flex;align-items:stretch;gap:7px}
+.menu-item{
+  flex:1;
+  min-width:0;
+  min-height:64px;
+  padding:9px 10px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  gap:5px;
+  text-align:center;
+  border-radius:11px;
+}
+.menu-item>span{width:30px;height:30px;flex:none}
+.menu-item div{min-width:0}
+.menu-item b{font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.menu-item small{display:none}
+.menu-item:hover{background:rgba(42,126,205,.14)}
+@media(max-width:650px){
+  .side-menu{right:-1px;width:min(390px,calc(100vw - 18px));padding:8px}
+  .side-menu.open{display:grid;grid-template-columns:repeat(5,1fr);gap:5px}
+  .menu-item{min-height:62px;padding:7px 4px}
+  .menu-item>span{width:27px;height:27px;font-size:14px}
+  .menu-item b{font-size:9px;line-height:1.15;white-space:normal}
+}
