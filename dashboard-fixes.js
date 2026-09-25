@@ -31,9 +31,10 @@
 
   const style=document.createElement('style');
   style.textContent=`
-    /* Fixed axis labels stay outside the plot lines. */
+    /* Axis labels sit outside the plot lines while remaining inside the chart frame. */
+    .chart-y-axis-left,.chart-y-axis-right{width:84px!important}
     .chart-y-axis-left span{right:8px!important}
-    .chart-y-axis-right span{left:60px!important;right:auto!important}
+    .chart-y-axis-right span{left:8px!important;right:auto!important}
     .chart-stage{overflow:hidden!important}
     .chart-stage svg{overflow:hidden!important}
     .chart-candles{clip-path:inset(0 0 0 0)}
