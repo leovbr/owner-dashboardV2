@@ -52,4 +52,13 @@
     .home-product:hover .home-arrow{transform:translateX(4px)}
   `;
   document.head.appendChild(style);
+
+  // Load the modular team/inventory layer after the existing dashboard is ready.
+  if(!window.__teamSystemLoaded){
+    window.__teamSystemLoaded=true;
+    const s=document.createElement('script');
+    s.src='team-system.js?v=20260926a';
+    s.defer=true;
+    document.body.appendChild(s);
+  }
 })();
