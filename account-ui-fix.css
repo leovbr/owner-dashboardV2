@@ -1,0 +1,2 @@
+/* Keep account identity inside the hamburger/menu; no floating badge over content. */
+.team-badge{display:none!important;visibility:hidden!important;pointer-events:none!important}
