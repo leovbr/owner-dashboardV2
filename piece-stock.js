@@ -6,7 +6,8 @@
   const write = (k, v) => localStorage.setItem(k, JSON.stringify(v));
   const esc = v => String(v ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
   const session = () => read(SESSION, null);
-  const isOwner = () => session()?.role === 'owner';
+  const role = () => session()?.role || '';
+  const canManageOpening = () => ['owner','kitchen'].includes(role());
   const state = () => read(KEY, { opening: null, used: 0, damaged: 0, current: 0, updatedAt: null });
 
   function style() {
@@ -47,15 +48,27 @@
     const box=document.getElementById('pieceStockTable'), owner=document.getElementById('pieceOwnerBox'); if(!box||!owner)return;
     const x=state();
     box.innerHTML=`
-      <div class="piece-stock-line"><span>Stok awal</span><b class="piece-stock-secret">${isOwner() ? (x.opening===null?'Belum dimasukkan':esc(x.opening)+' potong') : 'tunggu owner'}</b></div>
+      <div class="piece-stock-line"><span>Stok awal</span><b class="piece-stock-secret">${canManageOpening() ? (x.opening===null?'Belum dimasukkan':esc(x.opening)+' potong') : 'tunggu kitchen / owner'}</b></div>
       <div class="piece-stock-line"><span>Terpakai</span><b>−${x.used} potong</b></div>
       <div class="piece-stock-line"><span>Rusak</span><b>−${x.damaged} potong</b></div>
       <div class="piece-stock-line"><span>Sisa</span><b class="piece-stock-current">${x.current} potong</b></div>`;
-    owner.innerHTML=isOwner()?`<div class="piece-stock-owner"><b>🔐 Data Owner</b><span class="piece-stock-muted">Stok awal ayam mentah hanya bisa dilihat dan diubah Owner.</span><input id="pieceOpening" type="number" min="0" step="1" placeholder="Masukkan stok awal (potong)" value="${x.opening===null?'':x.opening}"><button class="piece-stock-btn primary" id="pieceSaveOpening">Simpan Stok Awal</button></div>`:'';
+    owner.innerHTML=canManageOpening()?`<div class="piece-stock-owner"><b>🔐 ${role()==='owner'?'Data Owner':'Data Kitchen'}</b><span class="piece-stock-muted">Stok awal ayam mentah bisa dimasukkan atau diedit oleh Owner maupun Kitchen.</span><input id="pieceOpening" type="number" min="0" step="1" placeholder="Masukkan stok awal (potong)" value="${x.opening===null?'':x.opening}"><button class="piece-stock-btn primary" id="pieceSaveOpening">Simpan Stok Awal</button></div>`:'';
     if(document.getElementById('pieceSaveOpening'))document.getElementById('pieceSaveOpening').onclick=saveOpening;
   }
 
-  function saveOpening(){const input=document.getElementById('pieceOpening');const n=Number(input?.value);if(!Number.isInteger(n)||n<0)return alert('Masukkan jumlah potong yang valid.');const x=state();x.opening=n;if(!x.current)x.current=n;x.updatedAt=new Date().toISOString();write(KEY,x);render();}
+  function saveOpening(){
+    if(!canManageOpening())return;
+    const input=document.getElementById('pieceOpening');const n=Number(input?.value);
+    if(!Number.isInteger(n)||n<0)return alert('Masukkan jumlah potong yang valid.');
+    const x=state();
+    const oldOpening=x.opening;
+    const oldCurrent=Number(x.current)||0;
+    x.opening=n;
+    if(oldOpening===null)x.current=n;
+    else if(oldCurrent===0 && n>0)x.current=n;
+    x.updatedAt=new Date().toISOString();
+    write(KEY,x);render();
+  }
   function change(key,label){const n=Number(prompt(`${label} ayam (potong)`,'1'));if(!Number.isInteger(n)||n<=0)return;const x=state();if(key==='used')x.used+=n;else x.damaged+=n;x.current=Math.max(0,x.current-n);x.updatedAt=new Date().toISOString();write(KEY,x);render();}
   function count(){const n=Number(prompt('Sisa ayam saat ini (potong)',String(state().current)));if(!Number.isInteger(n)||n<0)return;const x=state();x.current=n;x.updatedAt=new Date().toISOString();write(KEY,x);render();}
 
