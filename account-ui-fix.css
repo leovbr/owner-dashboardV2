@@ -14,3 +14,7 @@
 #accountButtonNative img{border-radius:inherit!important}
 #accountAvatarNative{box-shadow:0 0 0 1px rgba(98,181,255,.55),0 0 14px rgba(0,119,255,.25)!important}
 @keyframes accountAvatarGlow{from{box-shadow:0 0 0 1px rgba(45,145,255,.25),0 0 8px rgba(0,119,255,.3),0 0 16px rgba(0,119,255,.15)}to{box-shadow:0 0 0 2px rgba(98,181,255,.6),0 0 16px rgba(0,145,255,.65),0 0 32px rgba(0,119,255,.35)}}
+
+/* Account controls moved into hamburger menu; remove misplaced header avatar frame. */
+#accountCenterNative{display:none!important}
+.side-menu .menu-logout{margin-top:auto!important;position:relative!important;bottom:auto!important;order:99999!important;flex-shrink:0!important;border-top:1px solid rgba(139,177,214,.16)!important}
