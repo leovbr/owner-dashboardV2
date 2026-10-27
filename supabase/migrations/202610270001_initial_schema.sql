@@ -215,7 +215,7 @@ create policy sales_delete_managers on public.sales for delete to authenticated 
 create policy sale_items_select_members on public.sale_items for select to authenticated using (public.is_active_store_member(store_id));
 create policy sale_items_insert_members on public.sale_items for insert to authenticated with check (
   public.is_active_store_member(store_id)
-  and exists (select 1 from public.sales s where s.id = sale_id and s.store_id = store_id)
+  and exists (select 1 from public.sales s where s.id = sale_id and s.store_id = sale_items.store_id)
 );
 create policy sale_items_update_managers on public.sale_items for update to authenticated using (public.has_store_role(store_id, array['owner','manager'])) with check (public.has_store_role(store_id, array['owner','manager']));
 create policy sale_items_delete_managers on public.sale_items for delete to authenticated using (public.has_store_role(store_id, array['owner','manager']));
