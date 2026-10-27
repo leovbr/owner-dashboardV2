@@ -8,3 +8,9 @@
 
 /* Profile editing and account settings use popups; keep the legacy full-page profile screen out of view. */
 .page-settings{display:none!important}
+
+/* Neon blue glow around the store avatar/profile frame */
+#accountButtonNative{border:1px solid rgba(98,181,255,.95)!important;box-shadow:0 0 0 1px rgba(45,145,255,.35),0 0 12px rgba(0,119,255,.48),0 0 26px rgba(0,119,255,.25)!important;animation:accountAvatarGlow 2.8s ease-in-out infinite alternate!important}
+#accountButtonNative img{border-radius:inherit!important}
+#accountAvatarNative{box-shadow:0 0 0 1px rgba(98,181,255,.55),0 0 14px rgba(0,119,255,.25)!important}
+@keyframes accountAvatarGlow{from{box-shadow:0 0 0 1px rgba(45,145,255,.25),0 0 8px rgba(0,119,255,.3),0 0 16px rgba(0,119,255,.15)}to{box-shadow:0 0 0 2px rgba(98,181,255,.6),0 0 16px rgba(0,145,255,.65),0 0 32px rgba(0,119,255,.35)}}
